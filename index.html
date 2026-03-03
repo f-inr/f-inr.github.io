@@ -21,6 +21,89 @@
   <script src="./static/js/bulma-carousel.min.js"></script>
   <script src="./static/js/bulma-slider.min.js"></script>
   <script src="./static/js/index.js"></script>
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        tags: 'ams'
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="./static/js/mathjax.min.js"></script>
+
+  <style>
+    /* Paper figure captions */
+    .figure-caption {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 0.5rem;
+      text-align: justify;
+    }
+
+    .figure-caption strong {
+      color: #2c2c2c;
+    }
+
+    /* Quantitative result tables */
+    .result-table {
+      font-size: 0.82rem;
+    }
+
+    .result-table thead th {
+      background-color: #f5f5f5;
+      font-weight: 600;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .result-table td,
+    .result-table th {
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .result-table td:first-child {
+      text-align: left;
+    }
+
+    .result-table tr.finr-row {
+      background-color: #fafff8;
+    }
+
+    .result-table tr.section-header td {
+      background-color: #eeeeee;
+      font-weight: 600;
+      font-style: italic;
+    }
+
+    .td-green {
+      color: #1a7a1a;
+      font-weight: 600;
+    }
+
+    .td-red {
+      color: #c0392b;
+      font-weight: 600;
+    }
+
+    .best-result {
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .nerf-figure-row img {
+      max-height: 200px;
+      object-fit: contain;
+    }
+  </style>
 </head>
 
 <body>
@@ -180,6 +263,912 @@
     </div>
   </section>
 
+  <!-- Key Contributions -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Key Contributions</h2>
+        </div>
+      </div>
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <div class="content">
+            <ol>
+              <li>
+                <strong>Functional Tensor Decomposition for INRs.</strong>
+                We introduce a new paradigm for representation learning that is orthogonal to network design: factorizing a high-dimensional INR into compact, axis-specific sub-networks via established tensor decomposition modes (CP, TT, Tucker).
+              </li>
+              <li>
+                <strong>F-INR: a modular, agnostic framework.</strong>
+                F-INR is both architecture-agnostic (works with SIREN, WIRE, FINER, Factor Fields, ReLU/Tanh &plusmn; positional/hash encoding) and decomposition-agnostic, giving fine-grained control over the speed&ndash;accuracy trade-off through tensor rank and mode.
+              </li>
+              <li>
+                <strong>Significant empirical gains.</strong>
+                F-INR accelerates training by up to <strong>20&times;</strong> while improving reconstruction fidelity by <strong>over 6.0 dB PSNR</strong> compared to state-of-the-art INRs across image representation, 3D geometry (SDF), neural radiance fields, and physics-informed simulations.
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Method -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Method</h2>
+        </div>
+      </div>
+
+      <!-- Figure 1 -->
+      <div class="columns is-centered">
+        <div class="column is-four-fifths has-text-centered">
+          <figure class="image">
+            <img src="./static/images/fig1_overview.png" alt="Figure 1: Efficient INRs via Functional Tensor Decomposition" style="max-width:100%;">
+          </figure>
+          <p class="figure-caption">
+            <strong>Figure 1: Efficient INRs via Functional Tensor Decomposition.</strong>
+            INR models use a single, large network to predict one value (or a batch of values) at a time.
+            Our approach decomposes the function into smaller networks, enabling full prediction in a single
+            step with configurable tensor decomposition modes and compression ranks.
+          </p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <div class="content has-text-justified">
+            <p>
+              A conventional INR learns a monolithic network \(\Phi_\theta : \mathbb{R}^d \mapsto \mathbb{R}^c\)
+              that maps a \(d\)-dimensional coordinate to a \(c\)-variate output signal.
+              The curse of dimensionality means that the number of parameters, and thus training cost,
+              grows exponentially with the input dimensionality.
+            </p>
+            <p>
+              F-INR addresses this by replacing the monolithic network with a product of \(d\) small,
+              univariate sub-networks:
+            </p>
+            \[
+            \Phi(\mathbf{x}) \approx \bigotimes_{i=1}^{d}\, \phi_i(x_i;\,\theta_i),
+            \tag{1}
+            \]
+            <p>
+              where \(\phi_i(\cdot)\) denotes a univariate neural network for the \(i\)-th dimension with
+              learnable parameters \(\theta_i\). Each network produces a component of particular rank \(R\)
+              to restore the original signal via classical tensor decomposition modes \((\bigotimes)\).
+              The decomposition tensors have continuous functions as bases, yielding
+              <em>functional tensor decomposition</em>; hence the name F-INR.
+            </p>
+            <p>The outputs are combined via \(\bigotimes\) corresponding to one of three classical modes:</p>
+            <ul>
+              <li><strong>CP (Canonic-Polyadic)</strong> &mdash; \(d\) factor networks of rank \(R\), combined by element-wise product and summation.</li>
+              <li><strong>TT (Tensor Train)</strong> &mdash; a chain of low-rank tensor cores; two factor networks and one decomposition core.</li>
+              <li><strong>Tucker (TU)</strong> &mdash; factor networks plus a small core tensor \(\mathbf{C}\) capturing inter-mode interactions.</li>
+            </ul>
+            <p>
+              This reformulation reduces forward-pass complexity (see Table 1), preserves full differentiability
+              with respect to input coordinates (enabling PDE-based objectives), and is backend-agnostic,
+              any INR architecture can serve as the sub-network backbone.
+            </p>
+
+            <!-- Table 1: Forward Pass Complexity -->
+            <h4 class="title is-5" style="margin-top:1.5rem;">Table 1: Forward Pass Complexity</h4>
+            <p style="font-size:0.85rem;color:#555;">Assuming a grid of \(n \times n \times n\), i.e.\ \(n^3\) data points, and a network with \(m\) features and \(l\) layers. Note \(r \ll m^2 l\).</p>
+            <div class="table-wrapper">
+              <table class="table result-table is-bordered is-hoverable is-fullwidth">
+                <thead>
+                  <tr>
+                    <th>Mode</th>
+                    <th>Forward Pass</th>
+                    <th>Sub-networks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>CP</strong></td>
+                    <td>\(\mathcal{O}(n \cdot d \cdot r \cdot m \cdot l + r \cdot n^d)\)</td>
+                    <td>\(d\) factor networks</td>
+                  </tr>
+                  <tr>
+                    <td><strong>TT</strong></td>
+                    <td>\(\mathcal{O}(n \cdot d \cdot r^2 \cdot m \cdot l + r^2 \cdot n^d)\)</td>
+                    <td>2 factors &plus; 1 core</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Tucker (TU)</strong></td>
+                    <td>\(\mathcal{O}(n \cdot d \cdot r \cdot m \cdot l + r^d)\)</td>
+                    <td>\(d\) factors &plus; core \(\mathbf{C}\)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Experiments -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Experiments</h2>
+          <div class="content has-text-justified">
+            <p>
+              We evaluate F-INR on four tasks using a standard four-layer MLP with 256 features, trained for 50k steps with Adam (lr=10<sup>&minus;4</sup>) on an NVIDIA RTX 3090.
+              We test seven INR backends (ReLU, Tanh, SIREN, WIRE, FINER, Factor Fields, and variants with positional/hash encoding) across all three decomposition modes (CP, TT, Tucker) and a range of ranks, resulting in 136 configurations reported in the supplementary material.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Representation -->
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <h3 class="title is-4">Image Representation</h3>
+          <div class="content has-text-justified">
+            <p>
+              Images are second-order tensors, so a rank-\(R\) CP decomposition (two axis-specific networks
+              combined via matrix multiplication) suffices. In a conventional INR, an image is represented as
+              \(\Phi_\theta(x, y) = (r, g, b)\). F-INR instead learns
+              \(\phi_1(\mathbf{x};\theta_1) \otimes \phi_2(\mathbf{y};\theta_2) = (\mathbf{r}, \mathbf{g}, \mathbf{b})\)
+              where \(\otimes\) denotes matrix multiplication.
+              Evaluated on the DIV2K parrot benchmark against LIIF, DeepTensor, NeuRBF, CoordX, and Factor Fields;
+              all models trained with batch size \(2^{18}\).
+            </p>
+            <ul>
+              <li>F-INR (SIREN) achieves <span class="td-green">+7.29 dB PSNR</span> while cutting training from 3:22 to 1:49&thinsp;min.</li>
+              <li>F-INR (FINER+PE) gains <span class="td-green">+8.22 dB PSNR</span> with a \(14\times\) speedup.</li>
+              <li>F-INR (WIRE) offers a \(15\times\) speedup (31:28 &rarr; 2:07&thinsp;min) with <span class="td-green">+2.33 dB PSNR</span>.</li>
+              <li>F-INR (Factor Fields, rank 128) reaches <strong class="best-result">46.48 dB PSNR</strong>, the top result in the comparison.</li>
+              <li>Speedups over native backends reach \(20\times\); over optimized tiny-cuda-nn kernels \(2.2\times\).</li>
+            </ul>
+
+            <!-- Figure 3 -->
+            <figure class="image" style="margin: 1.5rem 0;">
+              <img src="./static/images/fig3_image_results.png" alt="Figure 3: Qualitative Image Results">
+            </figure>
+            <p class="figure-caption">
+              <strong>Figure 3: Qualitative Image Results.</strong>
+              F-INR improves both fidelity and training speed over the original backbones.
+              Fidelity improvements reach up to \(+7\,\text{dB}\) (SIREN) and training speedups reach \(20\times\)
+              for native backbones (WIRE) and \(2.2\times\) for optimized CUDA implementations (ReLU). Error maps are
+              magnified for visualization.
+            </p>
+
+            <!-- Table 2: Quantitative Image Results -->
+            <h4 class="title is-5" style="margin-top:1.5rem;">Table 2: Quantitative Image Results</h4>
+            <p style="font-size:0.85rem;color:#555;">PSNR \((\uparrow)\) and SSIM \((\uparrow)\) on the DIV2K parrot image (mean \(\pm\) std over 5 runs). &Delta;PSNR is relative to the corresponding baseline. &#8224; denotes tiny-cuda-nn implementation; * denotes convergence at 10k steps.</p>
+            <div class="table-wrapper">
+              <table class="table result-table is-bordered is-hoverable is-fullwidth">
+                <thead>
+                  <tr>
+                    <th>Method</th>
+                    <th>Backend</th>
+                    <th>Rank</th>
+                    <th>PSNR (dB)</th>
+                    <th>&Delta;PSNR</th>
+                    <th>SSIM</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="section-header">
+                    <td colspan="7">INR Baselines</td>
+                  </tr>
+                  <tr>
+                    <td>Tanh &#8224;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>25.04</td>
+                    <td>&ndash;</td>
+                    <td>0.82</td>
+                    <td>5:51</td>
+                  </tr>
+                  <tr>
+                    <td>ReLU+PE &#8224;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>34.35</td>
+                    <td>&ndash;</td>
+                    <td>0.95</td>
+                    <td>5:58</td>
+                  </tr>
+                  <tr>
+                    <td>ReLU+Hash (iNGP) &#8224;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>36.22</td>
+                    <td>&ndash;</td>
+                    <td>0.96</td>
+                    <td>7:40</td>
+                  </tr>
+                  <tr>
+                    <td>SIREN &#8224;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>28.89</td>
+                    <td>&ndash;</td>
+                    <td>0.97</td>
+                    <td>3:22</td>
+                  </tr>
+                  <tr>
+                    <td>WIRE</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>32.06</td>
+                    <td>&ndash;</td>
+                    <td>0.87</td>
+                    <td>31:28</td>
+                  </tr>
+                  <tr>
+                    <td>FINER</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>22.73</td>
+                    <td>&ndash;</td>
+                    <td>0.75</td>
+                    <td>22:45</td>
+                  </tr>
+                  <tr>
+                    <td>NeuRBF *</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>41.61</td>
+                    <td>&ndash;</td>
+                    <td>0.95</td>
+                    <td>8:22</td>
+                  </tr>
+                  <tr>
+                    <td>Factor Fields *</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>41.82</td>
+                    <td>&ndash;</td>
+                    <td>0.95</td>
+                    <td>1:35</td>
+                  </tr>
+                  <tr class="section-header">
+                    <td colspan="7">F-INR (ours)</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>WIRE</td>
+                    <td>316</td>
+                    <td>34.39</td>
+                    <td><span class="td-green">+2.33</span></td>
+                    <td>0.89</td>
+                    <td>2:07</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>WIRE+PE</td>
+                    <td>316</td>
+                    <td>35.72</td>
+                    <td><span class="td-green">+3.66</span></td>
+                    <td>0.90</td>
+                    <td>2:07</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>SIREN</td>
+                    <td>256</td>
+                    <td class="best-result">36.18</td>
+                    <td><span class="td-green">+7.29</span></td>
+                    <td>0.90</td>
+                    <td>1:49</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>SIREN+PE</td>
+                    <td>256</td>
+                    <td>36.28</td>
+                    <td><span class="td-green">+7.39</span></td>
+                    <td>0.90</td>
+                    <td>1:52</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>FINER+PE</td>
+                    <td>128</td>
+                    <td>30.95</td>
+                    <td><span class="td-green">+8.22</span></td>
+                    <td>0.83</td>
+                    <td>1:33</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>Factor Fields *</td>
+                    <td>128</td>
+                    <td class="best-result">46.48</td>
+                    <td><span class="td-green">+4.66</span></td>
+                    <td>0.98</td>
+                    <td>2:40</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SDF -->
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <h3 class="title is-4">3D Geometry via Signed Distance Functions</h3>
+          <div class="content has-text-justified">
+            <p>
+              F-INR learns SDFs from dense voxel grids using a physics-informed Eikonal loss evaluated
+              on Stanford 3D Scan geometries (Armadillo and others). The loss combines three terms:
+            </p>
+            \[
+            \mathcal{L}_{\text{SDF}} =
+            \underbrace{\int_{\Omega}\!\bigl\|\nabla\Psi - 1\bigr\|}_{{\text{Eikonal}}}
+            + \underbrace{\int_{\Omega}\!\bigl\|\Psi - \hat{\Psi}\bigr\|}_{{\text{data fidelity}}}
+            + \underbrace{\int_{\Omega_{<\Omega_0}}\!\bigl\|\Psi - \hat{\Psi}\bigr\|}_{{\text{surface term}}}, \tag{2} \] <p>
+              enforcing \(\|\nabla\Psi\|=1\) everywhere, global fidelity to \(\hat{\Psi}\), and extra
+              accuracy near the object surface \(\Omega_{<\Omega_0}\). This objective requires stable high-order gradients w.r.t.&nbsp;input coordinates, making discrete-lookup methods (TensoRF, hash grids, Factor Fields) incompatible. </p>
+                <ul>
+                  <li>F-INR (WIRE+PE, TT, rank 128) achieves <strong class="best-result">IoU 0.997</strong> and <strong>MSE 0.011</strong> on Armadillo in only 13:27&thinsp;min.</li>
+                  <li>F-INR (ReLU+PE, TU, rank 128) achieves <strong>IoU 0.992</strong> in 11:54&thinsp;min &mdash; <strong>\(>20\times\) faster</strong> than the 250+&thinsp;min baselines.</li>
+                  <li>Results surpass specialized methods (DeepSDF, IGR) on all tested geometries.</li>
+                </ul>
+
+                <!-- Figure 4 -->
+                <figure class="image" style="margin: 1.5rem 0;">
+                  <img src="./static/images/fig4_sdf_results.png" alt="Figure 4: Qualitative SDF Results">
+                </figure>
+                <p class="figure-caption">
+                  <strong>Figure 4: Qualitative SDF Results.</strong>
+                  F-INR models with strong inductive biases (WIRE, SIREN, ReLU+PE) capture fine geometric details
+                  with high fidelity. Others (Tanh, FINER) preserve macro-structure but fail to reconstruct
+                  high-frequency details, resulting in oversmoothed surfaces and lower IoU scores.
+                </p>
+
+                <!-- Table 3: Quantitative SDF Results -->
+                <h4 class="title is-5" style="margin-top:1.5rem;">Table 3: Quantitative SDF Results (Armadillo)</h4>
+                <p style="font-size:0.85rem;color:#555;">IoU \((\uparrow)\) and MSE \((\downarrow)\) over 5 runs. &#8224; = no Eikonal regularization. * = RTX 6000 Ada.</p>
+                <div class="table-wrapper">
+                  <table class="table result-table is-bordered is-hoverable is-fullwidth">
+                    <thead>
+                      <tr>
+                        <th>Method</th>
+                        <th>Backend</th>
+                        <th>Mode</th>
+                        <th>Rank</th>
+                        <th>IoU (&uarr;)</th>
+                        <th>MSE (&darr;)</th>
+                        <th>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="section-header">
+                        <td colspan="7">INR Baselines</td>
+                      </tr>
+                      <tr>
+                        <td>ReLU+PE</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.950</td>
+                        <td>0.233</td>
+                        <td>257:08</td>
+                      </tr>
+                      <tr>
+                        <td>WIRE</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.988</td>
+                        <td>0.154</td>
+                        <td>252:14</td>
+                      </tr>
+                      <tr>
+                        <td>SIREN</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.989</td>
+                        <td>0.127</td>
+                        <td>252:45</td>
+                      </tr>
+                      <tr>
+                        <td>FINER</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.989</td>
+                        <td>0.125</td>
+                        <td>217:10</td>
+                      </tr>
+                      <tr>
+                        <td>DeepSDF</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.989</td>
+                        <td>0.126</td>
+                        <td>315:32</td>
+                      </tr>
+                      <tr>
+                        <td>IGR</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.990</td>
+                        <td>0.127</td>
+                        <td>292:13</td>
+                      </tr>
+                      <tr>
+                        <td>NeuRBF &#8224;*</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.997</td>
+                        <td>0.153</td>
+                        <td>5:22</td>
+                      </tr>
+                      <tr>
+                        <td>Factor Fields &#8224;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>&ndash;</td>
+                        <td>0.972</td>
+                        <td>10<sup>&minus;6</sup></td>
+                        <td>5:24</td>
+                      </tr>
+                      <tr class="section-header">
+                        <td colspan="7">F-INR (ours)</td>
+                      </tr>
+                      <tr class="finr-row">
+                        <td>F-INR</td>
+                        <td>Tanh</td>
+                        <td>TT</td>
+                        <td>128</td>
+                        <td>0.941</td>
+                        <td>0.034</td>
+                        <td>12:34</td>
+                      </tr>
+                      <tr class="finr-row">
+                        <td>F-INR</td>
+                        <td>ReLU+PE</td>
+                        <td>TU</td>
+                        <td>128</td>
+                        <td class="best-result">0.992</td>
+                        <td class="best-result">0.013</td>
+                        <td>11:54</td>
+                      </tr>
+                      <tr class="finr-row">
+                        <td>F-INR</td>
+                        <td>WIRE+PE</td>
+                        <td>TT</td>
+                        <td>128</td>
+                        <td class="best-result">0.997</td>
+                        <td class="best-result">0.011</td>
+                        <td>13:27</td>
+                      </tr>
+                      <tr class="finr-row">
+                        <td>F-INR</td>
+                        <td>SIREN</td>
+                        <td>TU</td>
+                        <td>64</td>
+                        <td>0.989</td>
+                        <td>0.085</td>
+                        <td>8:29</td>
+                      </tr>
+                      <tr class="finr-row">
+                        <td>F-INR</td>
+                        <td>FINER+PE</td>
+                        <td>TT</td>
+                        <td>64</td>
+                        <td>0.978</td>
+                        <td>0.039</td>
+                        <td>8:13</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NeRF -->
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <h3 class="title is-4">Neural Radiance Fields</h3>
+          <div class="content has-text-justified">
+            <p>
+              Neural Radiance Fields represent a 3D scene as a continuous function mapping a 5D input
+              \((x,y,z,\theta,\phi)\) to a 4D output of color and volume density.
+              F-INR factorizes this 5D function into five univariate sub-networks, one per coordinate axis:
+            </p>
+            \[
+            f(x,y,z,\theta,\phi)
+            \approx \phi_x(x) \otimes \phi_y(y) \otimes \phi_z(z)
+            \otimes \phi_\theta(\theta) \otimes \phi_\phi(\phi),
+            \tag{3}
+            \]
+            <p>
+              replacing a monolithic 3D hash grid with three independent 1D hash encodings while keeping
+              all other NeRF components unchanged.
+              Evaluated on the synthetic NeRF dataset (Lego and Drums scenes).
+            </p>
+            <ul>
+              <li>F-INR (ReLU+HE, TT, rank 16) achieves <strong class="best-result">35.67 dB PSNR on Lego</strong> and <strong class="best-result">26.48 dB on Drums</strong> in 22.4&thinsp;min.</li>
+              <li>This exceeds K-Planes (34.23&thinsp;dB / 76.8&thinsp;min) and TensoRF (33.14&thinsp;dB / 25.8&thinsp;min) in both fidelity and speed.</li>
+              <li>TT decomposition outperforms CP and Tucker across all tested rank configurations.</li>
+              <li>A CUDA-optimized F-INR implementation is expected to yield further gains beyond the current pure-PyTorch results.</li>
+            </ul>
+
+            <!-- Figure 5 -->
+            <figure class="image" style="margin: 1.5rem 0;">
+              <img src="./static/images/fig5_nerf_lego.png" alt="NeRF Lego novel view">
+            </figure>
+            <figure class="image" style="margin: 1.5rem 0;">
+              <img src="./static/images/fig5_nerf_drums.png" alt="NeRF Drums novel view">
+            </figure>
+            <p class="figure-caption">
+              <strong>Figure 5: Qualitative NeRF Results.</strong>
+              Novel view renderings from the best-performing F-INR model (ReLU+HE, TT rank 16) on the
+              Lego (top) and Drums (bottom) scenes. The results demonstrate the model&apos;s ability to
+              reconstruct fine geometric details and complex view-dependent effects with high fidelity.
+            </p>
+
+            <!-- Table 4: Quantitative NeRF Results -->
+            <h4 class="title is-5" style="margin-top:1.5rem;">Table 4: Quantitative NeRF Results</h4>
+            <p style="font-size:0.85rem;color:#555;">PSNR (dB) on the synthetic NeRF dataset. * = RTX 6000 Ada.</p>
+            <div class="table-wrapper">
+              <table class="table result-table is-bordered is-hoverable is-fullwidth">
+                <thead>
+                  <tr>
+                    <th>Method</th>
+                    <th>Mode</th>
+                    <th>Rank</th>
+                    <th>Lego (&uarr;)</th>
+                    <th>Drums (&uarr;)</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="section-header">
+                    <td colspan="6">Baselines</td>
+                  </tr>
+                  <tr>
+                    <td>NeRF</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>30.83</td>
+                    <td>22.01</td>
+                    <td>135 h</td>
+                  </tr>
+                  <tr>
+                    <td>DVGO</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>31.25</td>
+                    <td>24.90</td>
+                    <td>24.4 min</td>
+                  </tr>
+                  <tr>
+                    <td>Plenoxels</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>31.71</td>
+                    <td>24.48</td>
+                    <td>22.5 min</td>
+                  </tr>
+                  <tr>
+                    <td>TensoRF</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>33.14</td>
+                    <td>25.26</td>
+                    <td>25.8 min</td>
+                  </tr>
+                  <tr>
+                    <td>ReLU+Hash (iNGP)</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>34.59</td>
+                    <td>25.28</td>
+                    <td>4.8 min</td>
+                  </tr>
+                  <tr>
+                    <td>NeuRBF *</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td class="best-result">37.29</td>
+                    <td class="best-result">26.57</td>
+                    <td>1.1 h</td>
+                  </tr>
+                  <tr>
+                    <td>Factor Fields</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>33.14</td>
+                    <td>26.57</td>
+                    <td>28.4 min</td>
+                  </tr>
+                  <tr>
+                    <td>K-Planes</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>34.23</td>
+                    <td>25.30</td>
+                    <td>76.8 min</td>
+                  </tr>
+                  <tr class="section-header">
+                    <td colspan="6">F-INR (ours, ReLU+HE)</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>CP</td>
+                    <td>4</td>
+                    <td>31.87</td>
+                    <td>24.55</td>
+                    <td>5.8 min</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>CP</td>
+                    <td>8</td>
+                    <td>33.88</td>
+                    <td>25.12</td>
+                    <td>8.1 min</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>CP</td>
+                    <td>16</td>
+                    <td class="best-result">34.81</td>
+                    <td>25.30</td>
+                    <td>18.3 min</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>TT</td>
+                    <td>8</td>
+                    <td>34.24</td>
+                    <td>25.07</td>
+                    <td>16.2 min</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>TT</td>
+                    <td>16</td>
+                    <td class="best-result">35.67</td>
+                    <td class="best-result">26.48</td>
+                    <td>22.4 min</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>TU</td>
+                    <td>8</td>
+                    <td>31.22</td>
+                    <td>23.02</td>
+                    <td>28.6 min</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Physics -->
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <h3 class="title is-4">Physics-Informed Learning</h3>
+          <div class="content has-text-justified">
+            <p>
+              F-INR is applied to learning decaying turbulence governed by the incompressible Navier-Stokes
+              equations in vorticity form:
+            </p>
+            \[
+            \partial_t \omega + u \cdot \nabla\omega = \nu\,\Delta\omega,
+            \quad x \in \Omega,\; t \in \Gamma, \tag{3a}
+            \]
+            \[
+            \nabla \cdot u = 0, \quad x \in \Omega,\; t \in \Gamma, \tag{3b}
+            \]
+            \[
+            \omega(x,0) = \omega_0(x), \quad x \in \Omega, \tag{3c}
+            \]
+            <p>
+              where \(u\) is the velocity field, \(\omega = \nabla \times u\) is the vorticity,
+              \(\omega_0\) is the initial vorticity, and \(\nu = 0.01\) is the viscosity coefficient.
+              The spatial domain is \(\Omega \in [0, 2\pi]^2\) and the temporal domain \(\Gamma \in [0,1]\).
+              The model is trained on sparse, coarse data (\(10 \times 64 \times 64\) resolution) and
+              must generalize to the full \(101 \times 128 \times 128\) grid &mdash; a \(40\times\) reduction
+              in supervision. The composite loss
+              \(\mathcal{L} = \mathcal{L}_{\text{data}} + \mathcal{L}_{\text{PDE}}\)
+              enforces physical consistency at domain collocation points.
+            </p>
+            <ul>
+              <li>F-INR (ReLU+PE, TT, rank 128) achieves <strong class="best-result">MSE 0.030</strong>, surpassing the previous best PhySR (0.038).</li>
+              <li>Training time drops from <strong>27&thinsp;h to under 2&thinsp;h</strong>, a \(>20\times\) speedup.</li>
+              <li>F-INR is the <em>first</em> successful application of the WIRE backbone to a complex physics simulation.</li>
+              <li>No time-marching is required; F-INR learns a single continuous function over the full spatio-temporal domain.</li>
+            </ul>
+
+            <!-- Figure 6 -->
+            <figure class="image" style="margin: 1.5rem 0;">
+              <img src="./static/images/fig6_pinn_results.png" alt="Figure 6: Qualitative PINN INR Results">
+            </figure>
+            <p class="figure-caption">
+              <strong>Figure 6: Qualitative PINN INR Results.</strong>
+              Vorticity field ground truth (left), F-INR prediction (ReLU+PE, TT rank 128, middle), and
+              pointwise absolute error (right) at three time steps. Trained on sparse data, the model
+              captures the complex dynamics across the full temporal domain. Error concentrates on
+              high-gradient regions (vortex edges) and grows as turbulence develops.
+            </p>
+
+            <!-- Table 5: Quantitative PINN Results -->
+            <h4 class="title is-5" style="margin-top:1.5rem;">Table 5: Quantitative PINN INR Results</h4>
+            <p style="font-size:0.85rem;color:#555;">MSE \((\downarrow)\) on the Navier-Stokes benchmark (mean \(\pm\) std). Models trained from \(10\times 64\times 64\) coarse data; evaluated at \(101\times 128\times 128\) full resolution.</p>
+            <div class="table-wrapper">
+              <table class="table result-table is-bordered is-hoverable is-fullwidth">
+                <thead>
+                  <tr>
+                    <th>Method</th>
+                    <th>Backend</th>
+                    <th>Mode</th>
+                    <th>Rank</th>
+                    <th>MSE (&darr;)</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="section-header">
+                    <td colspan="6">Baselines</td>
+                  </tr>
+                  <tr>
+                    <td>ReLU+PE</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>0.097</td>
+                    <td>20:30</td>
+                  </tr>
+                  <tr>
+                    <td>WIRE</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>0.073</td>
+                    <td>20:25</td>
+                  </tr>
+                  <tr>
+                    <td>SIREN</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>0.184</td>
+                    <td>20:24</td>
+                  </tr>
+                  <tr>
+                    <td>ModifiedPINN</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>0.074</td>
+                    <td>28:40</td>
+                  </tr>
+                  <tr>
+                    <td>CausalPINN</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>0.070</td>
+                    <td>33:12</td>
+                  </tr>
+                  <tr>
+                    <td>MeshFreeFlowNet</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>0.048</td>
+                    <td>35:18</td>
+                  </tr>
+                  <tr>
+                    <td>PhySR</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>&ndash;</td>
+                    <td>0.038</td>
+                    <td>27:05</td>
+                  </tr>
+                  <tr class="section-header">
+                    <td colspan="6">F-INR (ours)</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>WIRE</td>
+                    <td>TT</td>
+                    <td>64</td>
+                    <td>0.034</td>
+                    <td>0:59</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>WIRE</td>
+                    <td>TT</td>
+                    <td>256</td>
+                    <td class="best-result">0.033</td>
+                    <td>1:40</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>ReLU+PE</td>
+                    <td>TT</td>
+                    <td>64</td>
+                    <td class="best-result">0.033</td>
+                    <td>0:51</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>ReLU+PE</td>
+                    <td>TT</td>
+                    <td>128</td>
+                    <td class="best-result">0.030</td>
+                    <td>1:12</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>ReLU+PE</td>
+                    <td>TT</td>
+                    <td>256</td>
+                    <td class="best-result">0.030</td>
+                    <td>1:59</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>ReLU+PE</td>
+                    <td>TU</td>
+                    <td>128</td>
+                    <td>0.032</td>
+                    <td>1:34</td>
+                  </tr>
+                  <tr class="finr-row">
+                    <td>F-INR</td>
+                    <td>ReLU+PE</td>
+                    <td>TU</td>
+                    <td>256</td>
+                    <td>0.032</td>
+                    <td>2:03</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Acknowledgements -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Acknowledgements</h2>
+          <div class="content has-text-justified">
+            <p>
+              A great number of people have contributed to this paper, whether consciously or not.
+              We especially thank the members of our group for their contributions throughout the revisions
+              of this manuscript, which ultimately brought it to a publication-worthy state.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="BibTeX">
     <div class="container is-max-desktop content is-centered has-text-justified">
       <h2 class="title">BibTeX</h2>
@@ -201,7 +1190,7 @@
   <footer class="footer">
     <div class="container">
       <div class="content has-text-centered">
-        <a class="icon-link" href="#">
+        <a class="icon-link" href="https://openaccess.thecvf.com/content/WACV2026/papers/Vemuri_F-INR_Functional_Tensor_Decomposition_for_Implicit_Neural_Representations_WACV_2026_paper.pdf">
           <i class="fas fa-file-pdf"></i>
         </a>
         <a class="icon-link" href="https://timozen.github.io" class="external-link" disabled>
